@@ -1,0 +1,16 @@
+{
+    "id": "tasks",
+    "name": "Tasks App",
+    "version": "1.0.0",
+    "description": "Simple task list with todo/done status",
+    "provider": "PlatformApps\\Tasks\\TasksServiceProvider",
+    "requires": {
+        "platform": "^1.0"
+    },
+    "permissions": [
+        "tasks.view",
+        "tasks.create",
+        "tasks.update",
+        "tasks.delete"
+    ]
+}

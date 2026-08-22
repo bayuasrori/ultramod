@@ -1,0 +1,19 @@
+{
+    "id": "notes-status",
+    "type": "extension",
+    "name": "Notes Status",
+    "version": "1.0.0",
+    "description": "Adds status to Notes",
+    "provider": "PlatformApps\\NotesStatus\\NotesStatusServiceProvider",
+    "requires": {
+        "platform": "^1.0",
+        "notes": "^1.0"
+    },
+    "extends": [
+        "notes"
+    ],
+    "permissions": [
+        "notes-status.view",
+        "notes-status.update"
+    ]
+}

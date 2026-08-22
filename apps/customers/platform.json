@@ -1,0 +1,13 @@
+{
+    "id": "customers",
+    "name": "Customers App",
+    "version": "0.1.0",
+    "description": "Customers platform application",
+    "provider": "PlatformApps\\Customers\\CustomersServiceProvider",
+    "requires": {
+        "platform": "^1.0"
+    },
+    "permissions": [
+        "customers.view"
+    ]
+}

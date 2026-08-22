@@ -1,0 +1,13 @@
+{
+    "id": "cook-book",
+    "name": "CookBook App",
+    "version": "0.1.0",
+    "description": "CookBook platform application",
+    "provider": "PlatformApps\\CookBook\\CookBookServiceProvider",
+    "requires": {
+        "platform": "^1.0"
+    },
+    "permissions": [
+        "cook-book.view"
+    ]
+}

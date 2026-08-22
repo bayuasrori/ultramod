@@ -1,0 +1,16 @@
+{
+    "id": "kanban",
+    "name": "Kanban",
+    "version": "1.0.0",
+    "description": "Kanban boards with columns, tasks, priorities, assignees and tags",
+    "provider": "PlatformApps\\Kanban\\KanbanServiceProvider",
+    "requires": {
+        "platform": "^1.0"
+    },
+    "permissions": [
+        "kanban.view",
+        "kanban.create",
+        "kanban.update",
+        "kanban.delete"
+    ]
+}

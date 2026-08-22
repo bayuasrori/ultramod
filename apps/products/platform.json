@@ -1,0 +1,13 @@
+{
+    "id": "products",
+    "name": "Products App",
+    "version": "0.1.0",
+    "description": "Products platform application",
+    "provider": "PlatformApps\\Products\\ProductsServiceProvider",
+    "requires": {
+        "platform": "^1.0"
+    },
+    "permissions": [
+        "products.view"
+    ]
+}

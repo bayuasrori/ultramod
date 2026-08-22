@@ -1,0 +1,16 @@
+{
+    "id": "notes",
+    "name": "Notes App",
+    "version": "1.0.0",
+    "description": "Simple notes application demonstrating a full app lifecycle",
+    "provider": "PlatformApps\\Notes\\NotesServiceProvider",
+    "requires": {
+        "platform": "^1.0"
+    },
+    "permissions": [
+        "notes.view",
+        "notes.create",
+        "notes.update",
+        "notes.delete"
+    ]
+}

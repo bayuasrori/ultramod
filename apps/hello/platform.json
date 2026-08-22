@@ -1,0 +1,10 @@
+{
+    "id": "hello",
+    "name": "Hello App",
+    "version": "1.0.0",
+    "description": "Example application for the platform",
+    "provider": "PlatformApps\\Hello\\HelloServiceProvider",
+    "requires": {
+        "platform": "^1.0"
+    }
+}

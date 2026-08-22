@@ -1,0 +1,15 @@
+{
+    "id": "ai-assistant",
+    "name": "AI Assistant",
+    "version": "1.0.0",
+    "description": "Chat assistant supporting OpenAI-compatible APIs and Ollama",
+    "provider": "PlatformApps\\AiAssistant\\AiAssistantServiceProvider",
+    "requires": {
+        "platform": "^1.0"
+    },
+    "permissions": [
+        "ai.view",
+        "ai.chat",
+        "ai.manage-settings"
+    ]
+}

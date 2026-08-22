@@ -1,0 +1,16 @@
+{
+    "id": "bookmarks",
+    "name": "Bookmarks",
+    "version": "1.0.0",
+    "description": "Bookmark manager with collections, tags, favorites and async metadata fetching",
+    "provider": "PlatformApps\\Bookmarks\\BookmarksServiceProvider",
+    "requires": {
+        "platform": "^1.0"
+    },
+    "permissions": [
+        "bookmarks.view",
+        "bookmarks.create",
+        "bookmarks.update",
+        "bookmarks.delete"
+    ]
+}
