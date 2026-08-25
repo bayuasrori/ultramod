@@ -63,17 +63,23 @@ apps/notes/
 
 Open any app and you will think: *"this is just Laravel."* That is deliberate.
 
-## Quick start
+## Start a project
 
 ```bash
-git clone <your-repo> ultramod && cd ultramod
-composer install
-cp .env.example .env && php artisan key:generate
-touch database/database.sqlite     # or configure MySQL/Postgres in .env
-php artisan migrate --seed
-
-php artisan serve
+composer create-project bayuasrori/ultramod my-app
+cd my-app && php artisan serve
 ```
+
+That is the whole install. `create-project` generates the app key, creates
+`database/database.sqlite`, runs the migrations, seeds the admin account and
+scans `apps/` — so the platform is up on the first run.
+
+> Not on Packagist yet? Point Composer straight at the repository:
+>
+> ```bash
+> composer create-project bayuasrori/ultramod my-app \
+>   --repository='{"type":"vcs","url":"https://github.com/bayuasrori/ultramod"}'
+> ```
 
 Log in at `http://localhost:8000` with the seeded admin:
 
@@ -83,6 +89,26 @@ Log in at `http://localhost:8000` with the seeded admin:
 
 The first user to self-register on a fresh install automatically becomes the
 super admin.
+
+A new project starts with every bundled app **discovered but not installed** —
+the launcher is empty on purpose. Install what you actually want:
+
+```bash
+php artisan platform:app:install notes && php artisan platform:app:enable notes
+```
+
+...or do it from **Apps** in the navbar.
+
+Prefer a different database? Set `DB_CONNECTION` in `.env` before the first
+`php artisan migrate --seed`.
+
+### Working on Ultramod itself
+
+```bash
+git clone https://github.com/bayuasrori/ultramod.git && cd ultramod
+composer setup      # install, .env, key, migrate, npm install, npm run build
+php artisan serve
+```
 
 ## Meet the starter apps
 

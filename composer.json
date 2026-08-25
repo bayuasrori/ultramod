@@ -1,11 +1,15 @@
 {
     "$schema": "https://getcomposer.org/schema.json",
-    "name": "laravel/laravel",
+    "name": "bayuasrori/ultramod",
     "type": "project",
-    "description": "The skeleton application for the Laravel framework.",
+    "description": "A code-first modular application platform for Laravel. Install apps, extend them without forking, keep writing normal Laravel.",
     "keywords": [
         "laravel",
-        "framework"
+        "platform",
+        "modular",
+        "modules",
+        "apps",
+        "modular-monolith"
     ],
     "license": "MIT",
     "require": {
@@ -37,7 +41,6 @@
             "PlatformApps\\Calendar\\": "apps/calendar/src/",
             "PlatformApps\\Bookmarks\\": "apps/bookmarks/src/",
             "PlatformApps\\Products\\": "apps/products/src/",
-            "PlatformApps\\\\{Products}\\": "apps/products/src/",
             "PlatformApps\\Customers\\": "apps/customers/src/",
             "PlatformApps\\AiAssistant\\": "apps/ai-assistant/src/",
             "PlatformApps\\NotesStatus\\": "apps/notes-status/src/",
@@ -79,7 +82,8 @@
         "post-create-project-cmd": [
             "@php artisan key:generate --ansi",
             "@php -r \"file_exists('database/database.sqlite') || touch('database/database.sqlite');\"",
-            "@php artisan migrate --graceful --ansi"
+            "@php artisan migrate --graceful --seed --ansi",
+            "@php artisan platform:app:discover --ansi"
         ],
         "pre-package-uninstall": [
             "Illuminate\\Foundation\\ComposerScripts::prePackageUninstall"
@@ -100,5 +104,10 @@
         }
     },
     "minimum-stability": "stable",
-    "prefer-stable": true
+    "prefer-stable": true,
+    "homepage": "https://github.com/bayuasrori/ultramod",
+    "support": {
+        "issues": "https://github.com/bayuasrori/ultramod/issues",
+        "source": "https://github.com/bayuasrori/ultramod"
+    }
 }
