@@ -28,6 +28,7 @@
             <div class="navbar-nav ms-auto align-items-lg-center">
                 @auth
                     @can('platform.manage')
+                        <a class="nav-link" href="{{ route('platform.apps.index') }}">Apps</a>
                         <a class="nav-link" href="{{ route('platform.users.index') }}">Users</a>
                         <a class="nav-link" href="{{ route('platform.roles.index') }}">Roles</a>
                     @endcan

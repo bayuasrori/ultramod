@@ -8,9 +8,12 @@ use Illuminate\Support\Str;
 
 class AppScaffolder
 {
-    public function __construct(protected AppManager $manager)
-    {
-    }
+    /**
+     * Generated for every CRUD table, so they may not be declared by hand.
+     */
+    public const RESERVED_COLUMNS = ['id', 'created_at', 'updated_at'];
+
+    public function __construct(protected AppManager $manager) {}
 
     /**
      * Scaffold a new app skeleton and make it discoverable.
@@ -241,10 +244,21 @@ class AppScaffolder
             throw new AppException('At least one column is required for CRUD scaffolding.');
         }
 
+        $seen = [];
+
         foreach ($columns as $column) {
             if (! preg_match('/^[a-z][a-z0-9_]*$/', $column['name'])) {
                 throw new AppException("Invalid column name [{$column['name']}]: use lowercase letters, numbers and underscores, starting with a letter.");
             }
+
+            if (in_array($column['name'], self::RESERVED_COLUMNS, true)) {
+                throw new AppException("Column [{$column['name']}] is generated automatically and cannot be declared.");
+            }
+
+            if (isset($seen[$column['name']])) {
+                throw new AppException("Column [{$column['name']}] is declared twice.");
+            }
+            $seen[$column['name']] = true;
 
             if (! isset($this->columnTypes[$column['type']])) {
                 throw new AppException("Unsupported column type [{$column['type']}].");
@@ -268,13 +282,23 @@ class AppScaffolder
         file_put_contents($appPath."/resources/views/{$id}/index.blade.php", $this->crudIndexStub($id, $columns));
         file_put_contents($appPath."/resources/views/{$id}/form.blade.php", $this->crudFormStub($id, $model, $columns));
 
+        // The plain skeleton's placeholder view is replaced by the CRUD views.
+        @unlink($appPath."/resources/views/{$id}.blade.php");
+
         return $result;
     }
 
+    /**
+     * The column types the generator offers — the common ones, deliberately
+     * not every type the schema builder supports.
+     *
+     * @var array<string, string>
+     */
     protected array $columnTypes = [
         'string' => 'string',
         'text' => 'text',
         'integer' => 'integer',
+        'float' => 'float',
         'decimal' => 'decimal',
         'boolean' => 'boolean',
         'date' => 'date',
@@ -363,6 +387,7 @@ class AppScaffolder
         foreach ($columns as $column) {
             $cast = match ($column['type']) {
                 'integer' => 'integer',
+                'float' => 'float',
                 'decimal' => 'decimal:2',
                 'boolean' => 'boolean',
                 'date' => 'date',
@@ -439,7 +464,7 @@ class AppScaffolder
         foreach ($columns as $column) {
             $rule = match ($column['type']) {
                 'integer' => "['required', 'integer']",
-                'decimal' => "['required', 'numeric']",
+                'float', 'decimal' => "['required', 'numeric']",
                 'boolean' => "['nullable', 'boolean']",
                 'date' => "['required', 'date']",
                 'datetime' => "['required', 'date']",
@@ -480,7 +505,13 @@ class AppScaffolder
         use Illuminate\Support\Facades\Route;
         use PlatformApps\\{$studly}\Http\Controllers\\{$studly}Controller;
 
-        Route::resource('/{$id}', {$studly}Controller::class)->except(['show'])->names('{$id}');
+        // Without parameters() the route parameter is named after the URI
+        // segment, which would not match the controller's \$record argument:
+        // every action would silently receive an empty model.
+        Route::resource('/{$id}', {$studly}Controller::class)
+            ->parameters(['{$id}' => 'record'])
+            ->except(['show'])
+            ->names('{$id}');
         PHP."\n";
     }
 
@@ -488,8 +519,8 @@ class AppScaffolder
     {
         $headers = '';
         foreach ($columns as $column) {
-            $headers .= "                        <th>".Str::headline($column['name'])."</th>
-";
+            $headers .= '                        <th>'.Str::headline($column['name']).'</th>
+';
         }
 
         $cells = '';
@@ -557,6 +588,7 @@ class AppScaffolder
             $input = match ($column['type']) {
                 'text' => '<textarea name="'.$name.'" id="'.$name.'" class="form-control '.$errorClass.'" rows="4">'.$old.'</textarea>',
                 'integer' => '<input type="number" name="'.$name.'" id="'.$name.'" class="form-control '.$errorClass.'" value="'.$old.'">',
+                'float' => '<input type="number" step="any" name="'.$name.'" id="'.$name.'" class="form-control '.$errorClass.'" value="'.$old.'">',
                 'decimal' => '<input type="number" step="0.01" name="'.$name.'" id="'.$name.'" class="form-control '.$errorClass.'" value="'.$old.'">',
                 'boolean' => '<input type="checkbox" name="'.$name.'" id="'.$name.'" value="1" class="form-check-input" @checked(old(\''.$name.'\', $record->'.$name.'))>',
                 'date' => '<input type="date" name="'.$name.'" id="'.$name.'" class="form-control '.$errorClass.'" value="'.$old.'">',
@@ -565,7 +597,10 @@ class AppScaffolder
             };
 
             if ($column['type'] === 'boolean') {
+                // An unchecked box submits nothing, so without the hidden 0 the
+                // field would simply keep its previous value on every update.
                 $fields .= '                <div class="form-check mb-3">'."\n"
+                    .'                    <input type="hidden" name="'.$name.'" value="0">'."\n"
                     .'                    '.$input."\n"
                     .'                    <label class="form-check-label" for="'.$name.'">'.$label.'</label>'."\n"
                     .'                </div>'."\n";
@@ -590,9 +625,9 @@ class AppScaffolder
                     <h1 class="h3 card-title mb-3">@empty($record->id) Create @else Edit @endempty</h1>
                     <form method="POST" @empty($record->id) action="{{ route('{id}.store') }}" @else action="{{ route('{id}.update', $record) }}" @endempty>
                         @csrf
-                        @unless($record->id)
+                        @if ($record->id)
                             @method('PUT')
-                        @endunless
+                        @endif
 {fields}
                         <div class="d-flex gap-2">
                             <button type="submit" class="btn btn-primary">Save</button>

@@ -1,0 +1,17 @@
+{
+    "id": "form-builder",
+    "name": "Form Builder",
+    "version": "1.0.0",
+    "description": "Build forms from a field editor, share them, and collect submissions",
+    "provider": "PlatformApps\\FormBuilder\\FormBuilderServiceProvider",
+    "requires": {
+        "platform": "^1.0"
+    },
+    "permissions": [
+        "form-builder.view",
+        "form-builder.create",
+        "form-builder.update",
+        "form-builder.delete",
+        "form-builder.submit"
+    ]
+}

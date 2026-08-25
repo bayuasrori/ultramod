@@ -22,11 +22,12 @@ class AppListCommand extends Command
         }
 
         $this->table(
-            ['App ID', 'Name', 'Version', 'Status', 'Installed At'],
+            ['App ID', 'Name', 'Version', 'Available', 'Status', 'Installed At'],
             $apps->map(fn (PlatformApp $app) => [
                 $app->app_id,
                 $app->name,
                 $app->version,
+                $app->hasUpgrade() ? $app->available_version.' *' : ($app->available_version ?? '-'),
                 $app->status,
                 $app->installed_at?->format('Y-m-d H:i') ?? '-',
             ])->all(),

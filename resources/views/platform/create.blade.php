@@ -44,8 +44,20 @@
                             </div>
 
                             <label class="form-label mb-2">Columns</label>
+
+                            <div class="input-group input-group-sm mb-2">
+                                <span class="input-group-text bg-body-secondary" style="min-width: 8rem"><code>id</code></span>
+                                <input type="text" class="form-control" value="big integer · primary key · auto increment" disabled>
+                            </div>
+
                             <div id="columns"></div>
+
+                            @error('columns')<div class="text-danger small mb-2">{{ $message }}</div>@enderror
+
                             <button type="button" id="add-column" class="btn btn-sm btn-outline-secondary mt-2">+ Add column</button>
+                            <div class="form-text">
+                                <code>id</code>, <code>created_at</code> and <code>updated_at</code> are always generated — do not add them here.
+                            </div>
                         </div>
 
                         <div class="form-check mb-4">
@@ -55,7 +67,7 @@
 
                         <div class="d-flex gap-2">
                             <button type="submit" class="btn btn-primary">Scaffold app</button>
-                            <a href="{{ route('platform.index') }}" class="btn btn-outline-secondary">Cancel</a>
+                            <a href="{{ route('platform.apps.index') }}" class="btn btn-outline-secondary">Cancel</a>
                         </div>
                     </form>
                 </div>
@@ -66,11 +78,12 @@
     <template id="column-row">
         <div class="input-group input-group-sm mb-2 column-row">
             <input type="text" name="columns[name][]" class="form-control" placeholder="column_name" autocomplete="off">
-            <select name="columns[type][]" class="form-select" style="max-width: 12rem">
-                <option value="string">string</option>
-                <option value="text">text</option>
-                <option value="integer">integer</option>
-                <option value="decimal">decimal</option>
+            <select name="columns[type][]" class="form-select" style="max-width: 14rem">
+                <option value="string">string — varchar(255)</option>
+                <option value="text">text — long text</option>
+                <option value="integer">integer — int</option>
+                <option value="float">float</option>
+                <option value="decimal">decimal — 10,2</option>
                 <option value="boolean">boolean</option>
                 <option value="date">date</option>
                 <option value="datetime">datetime</option>
@@ -80,6 +93,12 @@
     </template>
 
     @push('scripts')
+        @php
+            $oldColumns = [];
+            foreach (old('columns.name', []) as $i => $oldName) {
+                $oldColumns[] = ['name' => $oldName, 'type' => old('columns.type.'.$i, 'string')];
+            }
+        @endphp
         <script>
             (function () {
                 var toggle = document.getElementById('crud');
@@ -91,33 +110,37 @@
                     options.style.display = toggle.checked ? '' : 'none';
                 }
 
-                function addRow() {
+                function addRow(name, type) {
                     columns.appendChild(template.content.cloneNode(true));
+
+                    var row = columns.lastElementChild;
+                    row.querySelector('input').value = name || '';
+                    row.querySelector('select').value = type || 'string';
                 }
 
                 toggle.addEventListener('change', sync);
-                document.getElementById('add-column').addEventListener('click', addRow);
+                document.getElementById('add-column').addEventListener('click', function () {
+                    addRow();
+                });
                 columns.addEventListener('click', function (e) {
                     if (e.target.classList.contains('remove-column')) {
                         e.target.closest('.column-row').remove();
                     }
                 });
 
-                if (toggle.checked) {
-                    sync();
-                    @foreach (old('columns.name', old('crud') ? [] : []) as $i => $name)
-                        addRow();
-                    @endforeach
-                    var rows = columns.querySelectorAll('.column-row');
-                    @foreach (old('columns.name', []) as $i => $name)
-                        if (rows[{{ $i }}]) {
-                            rows[{{ $i }}].querySelector('input').value = {{ json_encode($name) }};
-                            rows[{{ $i }}].querySelector('select').value = {{ json_encode(old('columns.type.'.$i, 'string')) }};
-                        }
-                    @endforeach
+                // Restore what was typed when the form comes back with errors,
+                // otherwise start with a single empty row.
+                var submitted = @json($oldColumns);
+
+                if (submitted.length) {
+                    submitted.forEach(function (column) {
+                        addRow(column.name, column.type);
+                    });
                 } else {
                     addRow();
                 }
+
+                sync();
             })();
         </script>
     @endpush

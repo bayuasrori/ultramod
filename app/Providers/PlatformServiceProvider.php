@@ -4,6 +4,10 @@ namespace App\Providers;
 
 use App\Platform\Contracts\ExtensionSlot;
 use App\Platform\Services\AppManager;
+use App\Platform\Services\AppUpgrader;
+use App\Platform\Services\AuditLogger;
+use App\Platform\Services\FileManager;
+use App\Platform\Services\SettingsManager;
 use App\Platform\Services\SlotManager;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Gate;
@@ -15,10 +19,11 @@ class PlatformServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->singleton(AppManager::class);
+        $this->app->singleton(AppUpgrader::class);
         $this->app->singleton(ExtensionSlot::class, SlotManager::class);
-        $this->app->singleton(\App\Platform\Services\SettingsManager::class);
-        $this->app->singleton(\App\Platform\Services\AuditLogger::class);
-        $this->app->singleton(\App\Platform\Services\FileManager::class);
+        $this->app->singleton(SettingsManager::class);
+        $this->app->singleton(AuditLogger::class);
+        $this->app->singleton(FileManager::class);
 
         // Register the service providers of all enabled apps. Apps that are
         // not enabled never enter the Laravel runtime: no routes, no views,

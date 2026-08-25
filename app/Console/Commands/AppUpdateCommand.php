@@ -8,7 +8,8 @@ use Illuminate\Console\Command;
 class AppUpdateCommand extends Command
 {
     protected $signature = 'platform:app:update {app : App ID}';
-    protected $description = 'Update an installed app, running its new migrations and syncing permissions';
+
+    protected $description = 'Alias of platform:app:upgrade --force: re-run migrations and permission sync for an installed app';
 
     public function handle(AppManager $manager): int
     {
@@ -17,9 +18,11 @@ class AppUpdateCommand extends Command
         try {
             $app = $manager->update($appId);
             $this->info("App [{$appId}] successfully updated to version {$app->version}.");
+
             return self::SUCCESS;
         } catch (\Exception $e) {
             $this->error($e->getMessage());
+
             return self::FAILURE;
         }
     }

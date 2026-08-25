@@ -6,15 +6,133 @@ use App\Platform\Exceptions\AppException;
 use App\Platform\Models\PlatformApp;
 use App\Platform\Services\AppManager;
 use App\Platform\Services\AppScaffolder;
+use App\Platform\Services\AppUpgrader;
+use App\Platform\Upgrades\UpgradePlan;
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\Cache;
 
 class PlatformController extends Controller
 {
-    public function index()
+    public function index(AppManager $manager)
     {
+        $this->discoverCached($manager);
+
+        // The dashboard is a launcher: only apps that are actually present
+        // in the installation belong here. Everything else (discovered apps
+        // waiting to be installed, uninstall, etc.) lives on the Apps page.
+        $cards = PlatformApp::whereNot('status', PlatformApp::STATUS_DISCOVERED)
+            ->orderBy('name')
+            ->get()
+            ->map(fn (PlatformApp $app) => $this->cardData($app, $manager));
+
         return view('platform.home', [
-            'apps' => PlatformApp::orderBy('app_id')->get(),
+            'apps' => $cards,
+            'upgradableCount' => $cards->filter(fn (array $card) => $card['app']->hasUpgrade())->count(),
         ]);
+    }
+
+    /**
+     * Full app registry: every discovered app with the install / enable /
+     * disable / uninstall controls.
+     */
+    public function apps(AppManager $manager)
+    {
+        $this->discoverCached($manager);
+
+        $apps = PlatformApp::orderBy('app_id')->get();
+
+        return view('platform.apps.index', [
+            'apps' => $apps,
+            'upgradableCount' => $apps->filter(fn (PlatformApp $app) => $app->hasUpgrade())->count(),
+        ]);
+    }
+
+    /**
+     * Reading a handful of manifests is cheap, but not free on every page
+     * load. Behind a short cache it removes the need to remember
+     * `platform:app:discover` before a new version shows up.
+     */
+    protected function discoverCached(AppManager $manager): void
+    {
+        Cache::remember('platform.discover', now()->addSeconds(60), function () use ($manager) {
+            $manager->discover();
+
+            return true;
+        });
+    }
+
+    /**
+     * @return array{app: PlatformApp, description: ?string, entry: ?string}
+     */
+    protected function cardData(PlatformApp $app, AppManager $manager): array
+    {
+        try {
+            $description = $manager->manifestFor($app->app_id)->description;
+        } catch (AppException) {
+            // App source removed while still registered.
+            $description = null;
+        }
+
+        $entry = null;
+
+        if ($app->status === PlatformApp::STATUS_ENABLED) {
+            $entry = $manager->menuFor($app->app_id)[0]['route'] ?? null;
+        }
+
+        return [
+            'app' => $app,
+            'description' => $description ?: null,
+            'entry' => $entry,
+        ];
+    }
+
+    /**
+     * Read-only preview of an upgrade, rendered as the confirmation dialog.
+     */
+    public function upgradePlan(string $app, AppUpgrader $upgrader)
+    {
+        $force = request()->boolean('force');
+
+        return response()->json($upgrader->plan($app, $force)->toArray());
+    }
+
+    public function upgradeAllPlan(AppUpgrader $upgrader)
+    {
+        return response()->json($upgrader->planOutdated()->toArray());
+    }
+
+    public function upgrade(string $app, AppUpgrader $upgrader)
+    {
+        $force = request()->boolean('force');
+
+        try {
+            $plan = $upgrader->upgrade($app, $force);
+        } catch (AppException $e) {
+            return redirect()->route('platform.apps.index')->with('error', $e->getMessage());
+        }
+
+        return redirect()->route('platform.apps.index')->with('status', $this->upgradeSummary($plan));
+    }
+
+    public function upgradeAll(AppUpgrader $upgrader)
+    {
+        try {
+            $plan = $upgrader->execute($upgrader->planOutdated());
+        } catch (AppException $e) {
+            return redirect()->route('platform.apps.index')->with('error', $e->getMessage());
+        }
+
+        return redirect()->route('platform.apps.index')->with('status', $this->upgradeSummary($plan));
+    }
+
+    protected function upgradeSummary(UpgradePlan $plan): string
+    {
+        $parts = array_map(
+            fn ($item) => "{$item->appId()} → {$item->toVersion}",
+            $plan->items,
+        );
+
+        return 'Upgraded '.implode(', ', $parts).'.';
     }
 
     public function create()
@@ -28,8 +146,10 @@ class PlatformController extends Controller
             'name' => ['required', 'string', 'max:50', 'regex:/^[a-z][a-z0-9-]*$/'],
             'table' => ['nullable', 'string', 'max:50', 'regex:/^[a-z][a-z0-9_]*$/'],
             'columns.name' => ['nullable', 'array'],
-            'columns.name.*' => ['string', 'max:50', 'regex:/^[a-z][a-z0-9_]*$/'],
-            'columns.type.*' => ['string', 'in:string,text,integer,decimal,boolean,date,datetime'],
+            // Blank rows are how the editor represents "not filled in yet";
+            // they are dropped below rather than rejected.
+            'columns.name.*' => ['nullable', 'string', 'max:50', 'regex:/^[a-z][a-z0-9_]*$/'],
+            'columns.type.*' => ['nullable', 'string', 'in:string,text,integer,float,decimal,boolean,date,datetime'],
         ], [
             'name.regex' => 'App name may only contain lowercase letters, numbers and dashes, and must start with a letter.',
             'table.regex' => 'Table name may only contain lowercase letters, numbers and underscores.',
@@ -45,9 +165,20 @@ class PlatformController extends Controller
             $types = $validated['columns']['type'] ?? [];
 
             if ($names === []) {
-                return redirect()->route('platform.apps.create')
-                    ->with('error', 'CRUD mode needs at least one column.')
-                    ->withInput();
+                return $this->crudError('CRUD mode needs at least one column.');
+            }
+
+            $reserved = array_intersect($names, AppScaffolder::RESERVED_COLUMNS);
+
+            if ($reserved !== []) {
+                return $this->crudError(
+                    'The columns '.implode(', ', AppScaffolder::RESERVED_COLUMNS).' are generated automatically; '.
+                    'remove '.implode(', ', $reserved).'.'
+                );
+            }
+
+            if (count($names) !== count(array_unique($names))) {
+                return $this->crudError('Column names must be unique.');
             }
 
             foreach ($names as $i => $name) {
@@ -76,9 +207,20 @@ class PlatformController extends Controller
 
         $message = "App [{$app['id']}] scaffolded at apps/{$app['id']}"
             .($crud ? ' with full CRUD for table '.$validated['table'] : '')
-            .($activate ? ' and installed & enabled.' : '. It is now discovered — install and enable it from the dashboard.');
+            .($activate ? ' and installed & enabled.' : '. It is now discovered — install and enable it from the Apps page.');
 
-        return redirect()->route('platform.index')->with('status', $message);
+        return redirect()->route('platform.apps.index')->with('status', $message);
+    }
+
+    /**
+     * Send the wizard back with an inline error on the columns editor, keeping
+     * everything the user already typed.
+     */
+    protected function crudError(string $message)
+    {
+        return redirect()->route('platform.apps.create')
+            ->withErrors(['columns' => $message])
+            ->withInput();
     }
 
     public function install(string $app, AppManager $manager)
@@ -106,9 +248,9 @@ class PlatformController extends Controller
         try {
             $manager->{$action}($app);
         } catch (AppException $e) {
-            return redirect()->route('platform.index')->with('error', $e->getMessage());
+            return redirect()->route('platform.apps.index')->with('error', $e->getMessage());
         }
 
-        return redirect()->route('platform.index')->with('status', "App [{$app}] {$action}ed successfully.");
+        return redirect()->route('platform.apps.index')->with('status', "App [{$app}] {$action}ed successfully.");
     }
 }

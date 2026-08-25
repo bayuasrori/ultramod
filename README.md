@@ -8,7 +8,7 @@ Install apps. Extend them without forking. Keep writing normal Laravel.
 
 [![Laravel](https://img.shields.io/badge/Laravel-13.x-FF2D20?style=flat-square&logo=laravel)](https://laravel.com)
 [![PHP](https://img.shields.io/badge/PHP-8.2%2B-777BB4?style=flat-square&logo=php)](https://php.net)
-[![Tests](https://img.shields.io/badge/tests-57%20passing-brightgreen?style=flat-square)]()
+[![Tests](https://img.shields.io/badge/tests-89%20passing-brightgreen?style=flat-square)]()
 [![License](https://img.shields.io/badge/license-MIT-blue?style=flat-square)]()
 
 *"Apps are code. The platform provides infrastructure. Applications provide behavior.
@@ -165,10 +165,15 @@ and Bootstrap index/form views. Generated code is ordinary Laravel — edit it f
 ```
 App name:  inventory
 Table:     products
-Columns:   name:string · price:decimal · active:boolean
+Columns:   id  (big integer · primary key · auto increment — always generated)
+           name:string · price:decimal · active:boolean   ← add as many as you like
                 ↓ generate
 Migration · Product model · Controller · StoreProductRequest · routes · views
 ```
+
+Column types are the common ones only: `string`, `text`, `integer`, `float`,
+`decimal`, `boolean`, `date`, `datetime`. `id`, `created_at` and `updated_at`
+are generated for every table and cannot be declared by hand.
 
 ## Core capabilities
 
@@ -202,6 +207,52 @@ php artisan platform:app:update notes  # new version? runs new migrations only
 php artisan platform:app:disable notes # out of the runtime, data kept
 php artisan platform:app:uninstall notes
 ```
+
+### Upgrading an app
+
+Bump the version in `platform.json`, ship the new code, and the dashboard shows
+`1.0.0 → 1.1.0 · upgrade available` next to the app with an **Upgrade** button.
+Clicking it opens the plan — pending migrations, upgrade steps, permission
+changes, apps that have to come along — and confirming runs the whole thing:
+
+```
+pre steps (oldest version first) → schema migrations → post steps → permissions → version bump
+```
+
+Data migrations that belong to one version live next to the app, and are
+returned the way a Laravel migration is returned — no autoload entry needed:
+
+```
+apps/notes/upgrades/
+├── 1.1.0/
+│   ├── PreUpgrade.php    ← runs before the schema changes
+│   └── PostUpgrade.php   ← runs after; backfill new columns here
+└── 1.2.0/
+    └── PostUpgrade.php
+```
+
+```php
+<?php
+
+return new class implements \App\Platform\Contracts\UpgradeStep
+{
+    public function run(\App\Platform\Upgrades\UpgradeContext $context): void
+    {
+        Note::whereNull('slug')->each(fn ($note) => $note->update(['slug' => str($note->title)->slug()]));
+        $context->info('backfilled note slugs');
+    }
+};
+```
+
+Going from 1.0 to 1.2 runs the 1.1 steps and then the 1.2 steps — versions are
+never skipped. Every step is recorded in `platform_app_upgrades`, so a step that
+already succeeded is not run again and a half-failed upgrade can simply be
+retried. If a step throws, the version is not bumped, the migration batch is
+rolled back and the error is shown on the dashboard.
+
+An app that depends on the one being upgraded either comes along in the same
+plan or the upgrade is refused — `notes-status ^1.0` will not be left behind on
+`notes 2.0`.
 
 Dependencies are declared in the manifest and enforced in every direction:
 

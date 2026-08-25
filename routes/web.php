@@ -33,14 +33,20 @@ Route::middleware('auth')->group(function () {
 
     // Admin-only platform management
     Route::middleware('can:platform.manage')->group(function () {
+        Route::get('/platform/apps', [PlatformController::class, 'apps'])->name('platform.apps.index');
         Route::get('/platform/apps/create', [PlatformController::class, 'create'])->name('platform.apps.create');
         Route::post('/platform/apps/create', [PlatformController::class, 'store'])->name('platform.apps.store');
+
+        Route::get('/platform/apps/upgrade-plan', [PlatformController::class, 'upgradeAllPlan'])->name('platform.apps.upgrade-all.plan');
+        Route::post('/platform/apps/upgrade-all', [PlatformController::class, 'upgradeAll'])->name('platform.apps.upgrade-all');
 
         Route::prefix('platform/apps/{app}')->name('platform.apps.')->group(function () {
             Route::post('/install', [PlatformController::class, 'install'])->name('install');
             Route::post('/enable', [PlatformController::class, 'enable'])->name('enable');
             Route::post('/disable', [PlatformController::class, 'disable'])->name('disable');
             Route::post('/uninstall', [PlatformController::class, 'uninstall'])->name('uninstall');
+            Route::get('/upgrade-plan', [PlatformController::class, 'upgradePlan'])->name('upgrade.plan');
+            Route::post('/upgrade', [PlatformController::class, 'upgrade'])->name('upgrade');
         });
 
         Route::resource('/platform/roles', RoleController::class)->except(['show'])->names('platform.roles');

@@ -17,10 +17,14 @@ class PlatformApp extends Model
 
     protected $table = 'platform_apps';
 
-    protected $fillable = ['app_id', 'name', 'version', 'provider', 'status', 'installed_at'];
+    protected $fillable = [
+        'app_id', 'name', 'version', 'available_version', 'manifest_hash',
+        'provider', 'status', 'installed_at', 'upgraded_at', 'last_upgrade_error',
+    ];
 
     protected $casts = [
         'installed_at' => 'datetime',
+        'upgraded_at' => 'datetime',
     ];
 
     /** @return array<int, string> */
@@ -37,5 +41,28 @@ class PlatformApp extends Model
     public function permissions(): HasMany
     {
         return $this->hasMany(PlatformAppPermission::class, 'app_id', 'app_id');
+    }
+
+    public function upgrades(): HasMany
+    {
+        return $this->hasMany(PlatformAppUpgrade::class, 'app_id', 'app_id');
+    }
+
+    public function isLive(): bool
+    {
+        return in_array($this->status, [self::STATUS_INSTALLED, self::STATUS_ENABLED], true);
+    }
+
+    /**
+     * The manifest on disk offers a newer version than the one that has
+     * actually been migrated.
+     */
+    public function hasUpgrade(): bool
+    {
+        if (! $this->isLive() || $this->available_version === null) {
+            return false;
+        }
+
+        return version_compare($this->available_version, $this->version, '>');
     }
 }

@@ -40,7 +40,8 @@
             "PlatformApps\\\\{Products}\\": "apps/products/src/",
             "PlatformApps\\Customers\\": "apps/customers/src/",
             "PlatformApps\\AiAssistant\\": "apps/ai-assistant/src/",
-            "PlatformApps\\NotesStatus\\": "apps/notes-status/src/"
+            "PlatformApps\\NotesStatus\\": "apps/notes-status/src/",
+            "PlatformApps\\FormBuilder\\": "apps/form-builder/src/"
         }
     },
     "autoload-dev": {
