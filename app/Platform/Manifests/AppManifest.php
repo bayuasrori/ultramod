@@ -31,6 +31,8 @@ class AppManifest
         public readonly array $extends = [],
         public readonly array $upgrade = [],
         public readonly int $menuOrder = self::DEFAULT_MENU_ORDER,
+        public readonly ?string $icon = null,
+        public readonly ?string $color = null,
     ) {}
 
     public static function fromFile(string $path): self
@@ -84,7 +86,14 @@ class AppManifest
             menuOrder: is_numeric($data['menu_order'] ?? null)
                 ? (int) $data['menu_order']
                 : self::DEFAULT_MENU_ORDER,
+            icon: self::stringOrNull($data['icon'] ?? null),
+            color: self::stringOrNull($data['color'] ?? null),
         );
+    }
+
+    protected static function stringOrNull(mixed $value): ?string
+    {
+        return is_string($value) && trim($value) !== '' ? trim($value) : null;
     }
 
     public function directory(): string

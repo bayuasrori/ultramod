@@ -3,6 +3,9 @@
     "name": "Form Builder",
     "version": "1.0.0",
     "description": "Build forms from a field editor, share them, and collect submissions",
+    "icon": "🧩",
+    "color": "#7c3aed",
+    "menu_order": 60,
     "provider": "PlatformApps\\FormBuilder\\FormBuilderServiceProvider",
     "requires": {
         "platform": "^1.0"

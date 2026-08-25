@@ -3,9 +3,9 @@
 namespace Tests\Feature;
 
 use App\Platform\Models\PlatformApp;
-use Tests\TestCase as BaseTestCase;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schema;
+use Tests\TestCase as BaseTestCase;
 
 class AppLifecycleTest extends BaseTestCase
 {
@@ -144,10 +144,16 @@ class AppLifecycleTest extends BaseTestCase
         $this->artisan('platform:app:uninstall', ['app' => 'hello'])->assertFailed();
     }
 
+    /**
+     * The app shortcuts live in the sidebar, which every page carries except
+     * the launcher itself — so the catalogue page is where it is asserted.
+     */
     public function test_platform_menu_shows_only_enabled_apps(): void
     {
         $this->nextRequest();
-        $this->get('/platform')->assertOk()->assertDontSee('>Notes<', false)->assertDontSee('>Hello<', false);
+        $this->get('/platform/apps')->assertOk()
+            ->assertDontSee('>Notes<', false)
+            ->assertDontSee('>Hello<', false);
 
         $this->artisan('platform:app:install', ['app' => 'hello'])->assertSuccessful();
         $this->artisan('platform:app:install', ['app' => 'notes'])->assertSuccessful();
@@ -155,10 +161,23 @@ class AppLifecycleTest extends BaseTestCase
         $this->artisan('platform:app:enable', ['app' => 'notes'])->assertSuccessful();
 
         $this->nextRequest();
-        $this->get('/platform')->assertOk()->assertSee('>Hello<', false)->assertSee('>Notes<', false);
+        $this->get('/platform/apps')->assertOk()
+            ->assertSee('>Hello<', false)
+            ->assertSee('>Notes<', false);
 
         $this->artisan('platform:app:disable', ['app' => 'notes'])->assertSuccessful();
         $this->nextRequest();
-        $this->get('/platform')->assertDontSee('>Notes<', false);
+        $this->get('/platform/apps')->assertDontSee('>Notes<', false);
+    }
+
+    public function test_the_launcher_carries_no_sidebar_of_its_own(): void
+    {
+        $this->artisan('platform:app:install', ['app' => 'hello'])->assertSuccessful();
+        $this->artisan('platform:app:enable', ['app' => 'hello'])->assertSuccessful();
+
+        $this->nextRequest();
+
+        $this->get('/platform')->assertOk()->assertDontSee('id="appSidebar"', false);
+        $this->get('/platform/apps')->assertOk()->assertSee('id="appSidebar"', false);
     }
 }

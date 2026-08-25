@@ -3,6 +3,9 @@
     "name": "Notes App",
     "version": "1.0.0",
     "description": "Simple notes application demonstrating a full app lifecycle",
+    "icon": "📝",
+    "color": "#4f46e5",
+    "menu_order": 10,
     "provider": "PlatformApps\\Notes\\NotesServiceProvider",
     "requires": {
         "platform": "^1.0"

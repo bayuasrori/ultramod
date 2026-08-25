@@ -3,6 +3,9 @@
     "name": "AI Assistant",
     "version": "1.0.0",
     "description": "Chat assistant supporting OpenAI-compatible APIs and Ollama",
+    "icon": "🤖",
+    "color": "#0284c7",
+    "menu_order": 70,
     "provider": "PlatformApps\\AiAssistant\\AiAssistantServiceProvider",
     "requires": {
         "platform": "^1.0"

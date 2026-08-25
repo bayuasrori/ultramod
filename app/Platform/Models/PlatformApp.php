@@ -18,13 +18,25 @@ class PlatformApp extends Model
     protected $table = 'platform_apps';
 
     protected $fillable = [
-        'app_id', 'name', 'version', 'available_version', 'manifest_hash',
+        'app_id', 'name', 'description', 'icon', 'color', 'menu_order',
+        'version', 'available_version', 'manifest_hash',
         'provider', 'status', 'installed_at', 'upgraded_at', 'last_upgrade_error',
     ];
 
     protected $casts = [
         'installed_at' => 'datetime',
         'upgraded_at' => 'datetime',
+        'menu_order' => 'integer',
+    ];
+
+    /**
+     * Tile colours for apps whose manifest does not pick one. The app id
+     * decides which, so an app keeps the same colour forever without
+     * anybody having to configure it.
+     */
+    public const PALETTE = [
+        '#4f46e5', '#0891b2', '#059669', '#d97706',
+        '#dc2626', '#7c3aed', '#db2777', '#0284c7',
     ];
 
     /** @return array<int, string> */
@@ -46,6 +58,35 @@ class PlatformApp extends Model
     public function upgrades(): HasMany
     {
         return $this->hasMany(PlatformAppUpgrade::class, 'app_id', 'app_id');
+    }
+
+    /**
+     * What goes inside the launcher tile: the manifest's icon, or the app's
+     * initials as a readable fallback.
+     */
+    public function iconLabel(): string
+    {
+        if ($this->icon !== null && $this->icon !== '') {
+            return $this->icon;
+        }
+
+        $words = preg_split('/[\s\-_]+/', (string) $this->name) ?: [];
+        $initials = '';
+
+        foreach (array_slice(array_filter($words), 0, 2) as $word) {
+            $initials .= mb_strtoupper(mb_substr($word, 0, 1));
+        }
+
+        return $initials !== '' ? $initials : mb_strtoupper(mb_substr($this->app_id, 0, 1));
+    }
+
+    public function tileColor(): string
+    {
+        if ($this->color !== null && preg_match('/^#[0-9a-fA-F]{6}$/', $this->color)) {
+            return $this->color;
+        }
+
+        return self::PALETTE[crc32($this->app_id) % count(self::PALETTE)];
     }
 
     public function isLive(): bool

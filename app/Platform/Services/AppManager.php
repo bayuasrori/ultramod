@@ -63,14 +63,12 @@ class AppManager
                 if ($record === null) {
                     $record = PlatformApp::create([
                         'app_id' => $manifest->id,
-                        'name' => $manifest->name,
                         'version' => $manifest->version,
                         'available_version' => $manifest->version,
                         'manifest_hash' => $this->manifestHash($manifest->id),
                         'provider' => $manifest->provider,
-                        'menu_order' => $manifest->menuOrder,
                         'status' => PlatformApp::STATUS_DISCOVERED,
-                    ]);
+                    ] + $this->presentationOf($manifest));
                     Event::dispatch(new AppDiscovered($record));
                 } else {
                     // `version` is the version whose migrations have actually
@@ -78,13 +76,9 @@ class AppManager
                     // overwriting the installed version here would make an
                     // outstanding upgrade impossible to detect.
                     $attributes = [
-                        'name' => $manifest->name,
                         'provider' => $manifest->provider,
                         'available_version' => $manifest->version,
-                        // Purely presentational, so it follows the manifest
-                        // immediately without waiting for an upgrade.
-                        'menu_order' => $manifest->menuOrder,
-                    ];
+                    ] + $this->presentationOf($manifest);
 
                     if (! $record->isLive()) {
                         $attributes['version'] = $manifest->version;
@@ -332,12 +326,16 @@ class AppManager
      * the `menu_order` each manifest declares. An app may override the
      * position of a single entry by giving that entry its own `order`.
      *
-     * @return array<int, array{label: string, route: string}>
+     * Each entry also carries the identity of the app it came from, so the
+     * sidebar can render the same icon and colour the launcher uses.
+     *
+     * @return array<int, array{label: string, route: string, app_id: string, icon: string, color: string}>
      */
     public function menuItems(): array
     {
-        $order = PlatformApp::whereIn('app_id', array_keys($this->loadedProviders))
-            ->pluck('menu_order', 'app_id');
+        $apps = PlatformApp::whereIn('app_id', array_keys($this->loadedProviders))
+            ->get()
+            ->keyBy('app_id');
 
         $items = [];
 
@@ -348,11 +346,16 @@ class AppManager
                 continue;
             }
 
-            $appOrder = (int) ($order[$appId] ?? AppManifest::DEFAULT_MENU_ORDER);
+            $app = $apps->get($appId);
+            $appOrder = (int) ($app?->menu_order ?? AppManifest::DEFAULT_MENU_ORDER);
 
             foreach ($provider->menu() as $item) {
                 $items[] = [
-                    'item' => $item,
+                    'item' => $item + [
+                        'app_id' => $appId,
+                        'icon' => $app?->iconLabel() ?? '?',
+                        'color' => $app?->tileColor() ?? '#6c757d',
+                    ],
                     'order' => (int) ($item['order'] ?? $appOrder),
                     'label' => (string) ($item['label'] ?? ''),
                 ];
@@ -473,6 +476,24 @@ class AppManager
         return [
             'added' => $wanted->diff($existing)->values()->all(),
             'removed' => $existing->diff($wanted)->values()->all(),
+        ];
+    }
+
+    /**
+     * Manifest fields that only affect how an app is presented. They follow
+     * the manifest immediately — nobody should have to run an upgrade to
+     * rename an app or move its tile.
+     *
+     * @return array<string, mixed>
+     */
+    protected function presentationOf(AppManifest $manifest): array
+    {
+        return [
+            'name' => $manifest->name,
+            'description' => $manifest->description !== '' ? $manifest->description : null,
+            'icon' => $manifest->icon,
+            'color' => $manifest->color,
+            'menu_order' => $manifest->menuOrder,
         ];
     }
 

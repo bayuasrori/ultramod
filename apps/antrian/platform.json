@@ -3,6 +3,9 @@
     "name": "Antrian App",
     "version": "0.1.0",
     "description": "Antrian platform application",
+    "icon": "🎫",
+    "color": "#0f766e",
+    "menu_order": 100,
     "provider": "PlatformApps\\Antrian\\AntrianServiceProvider",
     "requires": {
         "platform": "^1.0"

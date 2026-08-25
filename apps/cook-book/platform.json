@@ -3,6 +3,9 @@
     "name": "CookBook App",
     "version": "0.1.0",
     "description": "CookBook platform application",
+    "icon": "🍳",
+    "color": "#ea580c",
+    "menu_order": 110,
     "provider": "PlatformApps\\CookBook\\CookBookServiceProvider",
     "requires": {
         "platform": "^1.0"

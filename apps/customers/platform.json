@@ -3,6 +3,9 @@
     "name": "Customers App",
     "version": "0.1.0",
     "description": "Customers platform application",
+    "icon": "👥",
+    "color": "#db2777",
+    "menu_order": 80,
     "provider": "PlatformApps\\Customers\\CustomersServiceProvider",
     "requires": {
         "platform": "^1.0"

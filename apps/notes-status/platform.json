@@ -4,6 +4,9 @@
     "name": "Notes Status",
     "version": "1.0.0",
     "description": "Adds status to Notes",
+    "icon": "🚦",
+    "color": "#7c3aed",
+    "menu_order": 15,
     "provider": "PlatformApps\\NotesStatus\\NotesStatusServiceProvider",
     "requires": {
         "platform": "^1.0",

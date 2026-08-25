@@ -21,14 +21,29 @@ class PlatformController extends Controller
         // in the installation belong here. Everything else (discovered apps
         // waiting to be installed, uninstall, etc.) lives on the Apps page.
         $cards = PlatformApp::whereNot('status', PlatformApp::STATUS_DISCOVERED)
+            ->orderBy('menu_order')
             ->orderBy('name')
             ->get()
             ->map(fn (PlatformApp $app) => $this->cardData($app, $manager));
 
         return view('platform.home', [
             'apps' => $cards,
+            'greeting' => $this->greeting(),
+            // The launcher is the app list, so the sidebar stands down here.
+            'hideSidebar' => true,
             'upgradableCount' => $cards->filter(fn (array $card) => $card['app']->hasUpgrade())->count(),
         ]);
+    }
+
+    protected function greeting(): string
+    {
+        $hour = (int) now()->format('G');
+
+        return match (true) {
+            $hour < 12 => 'Good morning',
+            $hour < 18 => 'Good afternoon',
+            default => 'Good evening',
+        };
     }
 
     /**
@@ -66,12 +81,9 @@ class PlatformController extends Controller
      */
     protected function cardData(PlatformApp $app, AppManager $manager): array
     {
-        try {
-            $description = $manager->manifestFor($app->app_id)->description;
-        } catch (AppException) {
-            // App source removed while still registered.
-            $description = null;
-        }
+        // The description is mirrored into the registry by discovery, so the
+        // launcher never opens a manifest file per tile.
+        $description = $app->description;
 
         $entry = null;
 

@@ -3,6 +3,9 @@
     "name": "Bookmarks",
     "version": "1.0.0",
     "description": "Bookmark manager with collections, tags, favorites and async metadata fetching",
+    "icon": "🔖",
+    "color": "#d97706",
+    "menu_order": 50,
     "provider": "PlatformApps\\Bookmarks\\BookmarksServiceProvider",
     "requires": {
         "platform": "^1.0"

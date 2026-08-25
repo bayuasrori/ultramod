@@ -416,10 +416,12 @@ class AppUpgradeTest extends TestCase
         $this->writeMigration('demo', '2026_02_01_000000_create_demo_tags', 'demo_tags', 'migration:1.1');
         $this->manager()->discover();
 
+        // The launcher flags the pending update and offers it as an action.
         $this->get('/platform')
             ->assertOk()
-            ->assertSee('upgrade available')
-            ->assertSee('Upgrade');
+            ->assertSee('1 update available')
+            ->assertSee('update to 1.1.0')
+            ->assertSee(route('platform.apps.upgrade.plan', 'demo'), false);
 
         $this->getJson('/platform/apps/demo/upgrade-plan')
             ->assertOk()

@@ -3,6 +3,9 @@
     "name": "Calendar",
     "version": "1.0.0",
     "description": "Calendar with events, attendees, locations and reminders",
+    "icon": "📅",
+    "color": "#dc2626",
+    "menu_order": 40,
     "provider": "PlatformApps\\Calendar\\CalendarServiceProvider",
     "requires": {
         "platform": "^1.0"

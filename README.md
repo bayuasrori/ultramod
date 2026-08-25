@@ -254,6 +254,30 @@ An app that depends on the one being upgraded either comes along in the same
 plan or the upgrade is refused — `notes-status ^1.0` will not be left behind on
 `notes 2.0`.
 
+### Manifest presentation fields
+
+How an app shows up in the launcher and the navbar is declared, not hardcoded:
+
+```json
+{
+    "id": "notes",
+    "name": "Notes App",
+    "description": "Simple notes application demonstrating a full app lifecycle",
+    "icon": "📝",
+    "color": "#4f46e5",
+    "menu_order": 10
+}
+```
+
+| Field | Effect |
+|---|---|
+| `icon` | What sits in the launcher tile. Falls back to the app's initials. |
+| `color` | Tile colour, `#rrggbb`. Falls back to a colour derived from the app id, so every app looks distinct with no config. |
+| `menu_order` | Position in the navbar and the launcher, ascending. Defaults to `100`; ties break on label. |
+
+These are mirrored into the registry by discovery, so editing them takes effect
+on the next page load — no upgrade, no cache clear.
+
 Dependencies are declared in the manifest and enforced in every direction:
 
 ```json

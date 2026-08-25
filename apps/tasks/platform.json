@@ -3,6 +3,9 @@
     "name": "Tasks App",
     "version": "1.0.0",
     "description": "Simple task list with todo/done status",
+    "icon": "✅",
+    "color": "#059669",
+    "menu_order": 20,
     "provider": "PlatformApps\\Tasks\\TasksServiceProvider",
     "requires": {
         "platform": "^1.0"

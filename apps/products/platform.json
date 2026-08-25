@@ -3,6 +3,9 @@
     "name": "Products App",
     "version": "0.1.0",
     "description": "Products platform application",
+    "icon": "📦",
+    "color": "#b45309",
+    "menu_order": 90,
     "provider": "PlatformApps\\Products\\ProductsServiceProvider",
     "requires": {
         "platform": "^1.0"
