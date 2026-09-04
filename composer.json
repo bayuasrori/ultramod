@@ -44,7 +44,20 @@
             "PlatformApps\\Customers\\": "apps/customers/src/",
             "PlatformApps\\AiAssistant\\": "apps/ai-assistant/src/",
             "PlatformApps\\NotesStatus\\": "apps/notes-status/src/",
-            "PlatformApps\\FormBuilder\\": "apps/form-builder/src/"
+            "PlatformApps\\FormBuilder\\": "apps/form-builder/src/",
+            "PlatformApps\\AiAssistant\\Database\\Seeders\\": "apps/ai-assistant/database/seeders/",
+            "PlatformApps\\Antrian\\Database\\Seeders\\": "apps/antrian/database/seeders/",
+            "PlatformApps\\Bookmarks\\Database\\Seeders\\": "apps/bookmarks/database/seeders/",
+            "PlatformApps\\Calendar\\Database\\Seeders\\": "apps/calendar/database/seeders/",
+            "PlatformApps\\CookBook\\Database\\Seeders\\": "apps/cook-book/database/seeders/",
+            "PlatformApps\\Customers\\Database\\Seeders\\": "apps/customers/database/seeders/",
+            "PlatformApps\\FormBuilder\\Database\\Seeders\\": "apps/form-builder/database/seeders/",
+            "PlatformApps\\Hello\\Database\\Seeders\\": "apps/hello/database/seeders/",
+            "PlatformApps\\Kanban\\Database\\Seeders\\": "apps/kanban/database/seeders/",
+            "PlatformApps\\Notes\\Database\\Seeders\\": "apps/notes/database/seeders/",
+            "PlatformApps\\NotesStatus\\Database\\Seeders\\": "apps/notes-status/database/seeders/",
+            "PlatformApps\\Products\\Database\\Seeders\\": "apps/products/database/seeders/",
+            "PlatformApps\\Tasks\\Database\\Seeders\\": "apps/tasks/database/seeders/"
         }
     },
     "autoload-dev": {

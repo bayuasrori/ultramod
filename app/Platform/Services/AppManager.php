@@ -123,9 +123,20 @@ class AppManager
             }
         }
 
+        foreach ($manifest->extends as $extId) {
+            $reqApp = PlatformApp::where('app_id', $extId)->first();
+            if (! $reqApp || ! in_array($reqApp->status, [PlatformApp::STATUS_INSTALLED, PlatformApp::STATUS_ENABLED])) {
+                throw new Exception("Cannot install {$appId} because extended app {$extId} is not installed.");
+            }
+        }
+
         $this->runAppMigrations($appId);
 
         $this->syncPermissions($appId, grantAllViews: true);
+
+        if (is_file($this->appsPath() . DIRECTORY_SEPARATOR . $appId . DIRECTORY_SEPARATOR . 'database' . DIRECTORY_SEPARATOR . 'seeders' . DIRECTORY_SEPARATOR . 'DatabaseSeeder.php')) {
+            \Illuminate\Support\Facades\Artisan::call('platform:app:seed', ['app_id' => $appId]);
+        }
 
         $attributes = [
             'status' => PlatformApp::STATUS_INSTALLED,
@@ -188,6 +199,13 @@ class AppManager
             }
         }
 
+        foreach ($manifest->extends as $extId) {
+            $reqApp = PlatformApp::where('app_id', $extId)->first();
+            if (! $reqApp || $reqApp->status !== PlatformApp::STATUS_ENABLED) {
+                throw new Exception("Cannot enable {$appId} because extended app {$extId} is not enabled.");
+            }
+        }
+
         $app->update(['status' => PlatformApp::STATUS_ENABLED]);
 
         $this->registerApp($appId);
@@ -210,7 +228,7 @@ class AppManager
         foreach ($enabledApps as $enabledApp) {
             try {
                 $manifest = $this->manifestFor($enabledApp->app_id);
-                if (isset($manifest->requires[$appId])) {
+                if (isset($manifest->requires[$appId]) || in_array($appId, $manifest->extends)) {
                     throw new Exception("Cannot disable {$app->name} because {$enabledApp->name} depends on it.");
                 }
             } catch (AppNotFoundException $e) {
@@ -241,7 +259,7 @@ class AppManager
         foreach ($installedApps as $installedApp) {
             try {
                 $manifest = $this->manifestFor($installedApp->app_id);
-                if (isset($manifest->requires[$appId])) {
+                if (isset($manifest->requires[$appId]) || in_array($appId, $manifest->extends)) {
                     throw new Exception("Cannot uninstall {$app->name} because {$installedApp->name} depends on it.");
                 }
             } catch (AppNotFoundException $e) {
@@ -302,9 +320,63 @@ class AppManager
             return;
         }
 
-        PlatformApp::where('status', PlatformApp::STATUS_ENABLED)
+        $appIds = PlatformApp::where('status', PlatformApp::STATUS_ENABLED)
             ->pluck('app_id')
-            ->each(fn (string $appId) => $this->registerApp($appId));
+            ->toArray();
+
+        $sortedAppIds = $this->sortAppsByDependencies($appIds);
+
+        foreach ($sortedAppIds as $appId) {
+            $this->registerApp($appId);
+        }
+    }
+
+    /**
+     * @param  array<int, string>  $appIds
+     * @return array<int, string>
+     */
+    public function sortAppsByDependencies(array $appIds): array
+    {
+        $apps = [];
+        foreach ($appIds as $appId) {
+            try {
+                $manifest = $this->manifestFor($appId);
+                $deps = array_keys($manifest->requires);
+                $deps = array_merge($deps, $manifest->extends);
+                $apps[$appId] = array_intersect($deps, $appIds);
+            } catch (Exception $e) {
+                $apps[$appId] = [];
+            }
+        }
+
+        $sorted = [];
+        $visited = [];
+        $temp = [];
+
+        $visit = function (string $appId) use (&$visit, &$sorted, &$visited, &$temp, $apps) {
+            if (isset($temp[$appId])) {
+                throw new Exception("Circular dependency detected involving app [{$appId}].");
+            }
+            if (! isset($visited[$appId])) {
+                $temp[$appId] = true;
+                if (isset($apps[$appId])) {
+                    foreach ($apps[$appId] as $depId) {
+                        $visit($depId);
+                    }
+                }
+                unset($temp[$appId]);
+                $visited[$appId] = true;
+                $sorted[] = $appId;
+            }
+        };
+
+        foreach (array_keys($apps) as $appId) {
+            if (! isset($visited[$appId])) {
+                $visit($appId);
+            }
+        }
+
+        return $sorted;
     }
 
     public function registerApp(string $appId): void
@@ -549,7 +621,7 @@ class AppManager
                 continue;
             }
 
-            if (isset($manifest->requires[$appId])) {
+            if (isset($manifest->requires[$appId]) || in_array($appId, $manifest->extends)) {
                 $dependents[] = $candidate;
             }
         }

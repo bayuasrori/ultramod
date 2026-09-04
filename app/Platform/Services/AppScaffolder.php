@@ -60,6 +60,7 @@ class AppScaffolder
         $composer = json_decode((string) file_get_contents($composerFile), true);
 
         $composer['autoload']['psr-4']["PlatformApps\\{$studly}\\"] = "apps/{$id}/src/";
+        $composer['autoload']['psr-4']["PlatformApps\\{$studly}\\Database\\Seeders\\"] = "apps/{$id}/database/seeders/";
 
         file_put_contents(
             $composerFile,
