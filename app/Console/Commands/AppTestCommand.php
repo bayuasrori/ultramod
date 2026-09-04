@@ -14,7 +14,7 @@ class AppTestCommand extends Command
     public function handle(AppManager $manager): int
     {
         $appId = $this->argument('app_id');
-        $path = $manager->appsPath() . DIRECTORY_SEPARATOR . $appId . DIRECTORY_SEPARATOR . 'tests';
+        $path = $manager->appPath($appId) . DIRECTORY_SEPARATOR . 'tests';
 
         if (!is_dir($path)) {
             $this->error("No tests directory found for app [{$appId}] at {$path}");

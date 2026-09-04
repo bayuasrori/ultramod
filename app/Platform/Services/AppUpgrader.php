@@ -247,7 +247,7 @@ class AppUpgrader
         $ran = DB::table('migrations')->pluck('migration')->all();
         $pending = [];
 
-        foreach (glob(base_path($this->manager->migrationsPath($appId)).'/*.php') ?: [] as $file) {
+        foreach (glob($this->manager->migrationsPath($appId).'/*.php') ?: [] as $file) {
             $name = basename($file, '.php');
 
             if (! in_array($name, $ran, true)) {
@@ -271,7 +271,7 @@ class AppUpgrader
      */
     public function stepsFor(string $appId, string $from, string $to, bool $force = false): array
     {
-        $root = $this->manager->appsPath().DIRECTORY_SEPARATOR.$appId.DIRECTORY_SEPARATOR.'upgrades';
+        $root = $this->manager->appPath($appId).DIRECTORY_SEPARATOR.'upgrades';
 
         if (! is_dir($root)) {
             return [];
@@ -554,7 +554,7 @@ class AppUpgrader
 
         try {
             Artisan::call('migrate:rollback', [
-                '--path' => $this->manager->migrationsPath($appId),
+                '--path' => str_replace(base_path() . '/', '', $this->manager->migrationsPath($appId)),
                 '--force' => true,
             ]);
         } catch (Throwable) {

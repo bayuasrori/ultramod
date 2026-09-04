@@ -29,7 +29,7 @@ class AppScaffolder
         }
 
         $studly = Str::studly($id);
-        $appPath = $this->manager->appsPath().DIRECTORY_SEPARATOR.$id;
+        $appPath = $this->manager->defaultAppsPath().DIRECTORY_SEPARATOR.$id;
 
         if (is_dir($appPath)) {
             throw new AppException("App [{$id}] already exists at {$appPath}.");

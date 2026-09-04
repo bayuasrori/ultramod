@@ -19,7 +19,7 @@ class AppMakeComponentCommand extends Command
         $name = $this->argument('name');
         
         $studlyApp = Str::studly($appId);
-        $basePath = $manager->appsPath() . DIRECTORY_SEPARATOR . $appId;
+        $basePath = $manager->appPath($appId) ?? $manager->defaultAppsPath() . DIRECTORY_SEPARATOR . $appId;
         
         if (!is_dir($basePath)) {
             $this->error("App [{$appId}] does not exist at {$basePath}");

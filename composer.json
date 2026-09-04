@@ -57,7 +57,9 @@
             "PlatformApps\\Notes\\Database\\Seeders\\": "apps/notes/database/seeders/",
             "PlatformApps\\NotesStatus\\Database\\Seeders\\": "apps/notes-status/database/seeders/",
             "PlatformApps\\Products\\Database\\Seeders\\": "apps/products/database/seeders/",
-            "PlatformApps\\Tasks\\Database\\Seeders\\": "apps/tasks/database/seeders/"
+            "PlatformApps\\Tasks\\Database\\Seeders\\": "apps/tasks/database/seeders/",
+            "PlatformApps\\Inventory\\Database\\Seeders\\": "apps/inventory/database/seeders/",
+            "PlatformApps\\Stockroom\\Database\\Seeders\\": "apps/stockroom/database/seeders/"
         }
     },
     "autoload-dev": {

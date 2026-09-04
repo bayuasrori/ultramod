@@ -19,7 +19,7 @@ class AppSeedCommand extends Command
         $studly = Str::studly($appId);
         $seederClass = "PlatformApps\\{$studly}\\Database\\Seeders\\{$class}";
         
-        $path = $manager->appsPath() . DIRECTORY_SEPARATOR . $appId . DIRECTORY_SEPARATOR . 'database' . DIRECTORY_SEPARATOR . 'seeders' . DIRECTORY_SEPARATOR . $class . '.php';
+        $path = $manager->appPath($appId) . DIRECTORY_SEPARATOR . 'database' . DIRECTORY_SEPARATOR . 'seeders' . DIRECTORY_SEPARATOR . $class . '.php';
 
         if (!is_file($path)) {
             $this->warn("No seeder found for app [{$appId}] at {$path}");

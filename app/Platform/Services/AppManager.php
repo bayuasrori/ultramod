@@ -35,9 +35,26 @@ class AppManager
 
     public function __construct(protected Container $container) {}
 
-    public function appsPath(): string
+    public function appsPaths(): array
     {
-        return base_path(config('platform.apps_path', 'apps'));
+        $paths = config('platform.apps_paths', [config('platform.apps_path', 'apps')]);
+        return array_map(fn($p) => base_path($p), $paths);
+    }
+
+    public function defaultAppsPath(): string
+    {
+        $path = config('platform.default_apps_path', config('platform.apps_path', 'apps'));
+        return base_path($path);
+    }
+
+    public function appPath(string $appId): ?string
+    {
+        foreach ($this->appsPaths() as $path) {
+            if (is_dir($path . DIRECTORY_SEPARATOR . $appId)) {
+                return $path . DIRECTORY_SEPARATOR . $appId;
+            }
+        }
+        return null;
     }
 
     /**
@@ -49,8 +66,9 @@ class AppManager
     {
         $manifests = [];
 
-        if (is_dir($this->appsPath())) {
-            foreach (Finder::create()->in($this->appsPath())->directories()->depth(0) as $dir) {
+        foreach ($this->appsPaths() as $appsPath) {
+            if (is_dir($appsPath)) {
+                foreach (Finder::create()->in($appsPath)->directories()->depth(0) as $dir) {
                 $manifestFile = $dir->getPathname().DIRECTORY_SEPARATOR.'platform.json';
                 if (! is_file($manifestFile)) {
                     continue;
@@ -87,6 +105,7 @@ class AppManager
 
                     $record->update($attributes);
                 }
+            }
             }
         }
 
@@ -134,7 +153,7 @@ class AppManager
 
         $this->syncPermissions($appId, grantAllViews: true);
 
-        if (is_file($this->appsPath() . DIRECTORY_SEPARATOR . $appId . DIRECTORY_SEPARATOR . 'database' . DIRECTORY_SEPARATOR . 'seeders' . DIRECTORY_SEPARATOR . 'DatabaseSeeder.php')) {
+        if ($this->appPath($appId) && is_file($this->appPath($appId) . DIRECTORY_SEPARATOR . 'database' . DIRECTORY_SEPARATOR . 'seeders' . DIRECTORY_SEPARATOR . 'DatabaseSeeder.php')) {
             \Illuminate\Support\Facades\Artisan::call('platform:app:seed', ['app_id' => $appId]);
         }
 
@@ -296,7 +315,7 @@ class AppManager
 
     public function manifestFor(string $appId): AppManifest
     {
-        $file = $this->appsPath().DIRECTORY_SEPARATOR.$appId.DIRECTORY_SEPARATOR.'platform.json';
+        $file = $this->appPath($appId).DIRECTORY_SEPARATOR.'platform.json';
 
         if (! is_file($file)) {
             throw AppNotFoundException::forId($appId);
@@ -569,14 +588,16 @@ class AppManager
         ];
     }
 
-    public function migrationsPath(string $appId): string
+    public function migrationsPath(string $appId): ?string
     {
-        return config('platform.apps_path').'/'.$appId.'/database/migrations';
+        $path = $this->appPath($appId);
+        return $path ? $path . '/database/migrations' : null;
     }
 
     public function hasMigrations(string $appId): bool
     {
-        return is_dir(base_path($this->migrationsPath($appId)));
+        $path = $this->migrationsPath($appId);
+        return $path && is_dir($path);
     }
 
     public function runAppMigrations(string $appId): string
@@ -585,7 +606,8 @@ class AppManager
             return '';
         }
 
-        Artisan::call('migrate', ['--path' => $this->migrationsPath($appId), '--force' => true]);
+        // Using realpath to ensure Laravel handles absolute paths correctly
+        Artisan::call('migrate', ['--path' => str_replace(base_path() . '/', '', $this->migrationsPath($appId)), '--force' => true]);
 
         return trim(Artisan::output());
     }
@@ -596,7 +618,7 @@ class AppManager
      */
     public function manifestHash(string $appId): string
     {
-        $file = $this->appsPath().DIRECTORY_SEPARATOR.$appId.DIRECTORY_SEPARATOR.'platform.json';
+        $file = $this->appPath($appId).DIRECTORY_SEPARATOR.'platform.json';
 
         return is_file($file) ? hash_file('sha256', $file) : '';
     }
