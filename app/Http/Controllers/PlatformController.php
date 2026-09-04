@@ -259,10 +259,36 @@ class PlatformController extends Controller
     {
         try {
             $manager->{$action}($app);
-        } catch (AppException $e) {
+        } catch (\Exception $e) {
             return redirect()->route('platform.apps.index')->with('error', $e->getMessage());
         }
 
         return redirect()->route('platform.apps.index')->with('status', "App [{$app}] {$action}ed successfully.");
+    }
+
+    public function test(string $app)
+    {
+        try {
+            \Illuminate\Support\Facades\Artisan::call('platform:app:test', ['app_id' => $app]);
+            $output = \Illuminate\Support\Facades\Artisan::output();
+            
+            if (str_contains($output, 'ERRORS') || str_contains($output, 'FAILURES')) {
+                return redirect()->route('platform.apps.index')->with('error', "Tests failed for app [{$app}]. See console for details.");
+            }
+            
+            return redirect()->route('platform.apps.index')->with('status', "Tests passed for app [{$app}].");
+        } catch (\Exception $e) {
+            return redirect()->route('platform.apps.index')->with('error', $e->getMessage());
+        }
+    }
+
+    public function seed(string $app)
+    {
+        try {
+            \Illuminate\Support\Facades\Artisan::call('platform:app:seed', ['app_id' => $app]);
+            return redirect()->route('platform.apps.index')->with('status', "Seeder executed successfully for app [{$app}].");
+        } catch (\Exception $e) {
+            return redirect()->route('platform.apps.index')->with('error', $e->getMessage());
+        }
     }
 }

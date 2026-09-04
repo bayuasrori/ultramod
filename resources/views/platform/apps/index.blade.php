@@ -91,6 +91,18 @@
                                 </form>
                             @endif
 
+                            @if (in_array($app->status, ['installed', 'enabled', 'disabled']))
+                                <form method="POST" action="{{ route('platform.apps.seed', $app->app_id) }}" class="d-inline">
+                                    @csrf
+                                    <button type="submit" class="btn btn-sm btn-outline-info">Seed</button>
+                                </form>
+                            @endif
+
+                            <form method="POST" action="{{ route('platform.apps.test', $app->app_id) }}" class="d-inline">
+                                @csrf
+                                <button type="submit" class="btn btn-sm btn-outline-secondary">Test</button>
+                            </form>
+
                             @if ($app->status === 'enabled')
                                 <form method="POST" action="{{ route('platform.apps.disable', $app->app_id) }}" class="d-inline">
                                     @csrf

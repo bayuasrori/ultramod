@@ -47,6 +47,8 @@ Route::middleware('auth')->group(function () {
             Route::post('/uninstall', [PlatformController::class, 'uninstall'])->name('uninstall');
             Route::get('/upgrade-plan', [PlatformController::class, 'upgradePlan'])->name('upgrade.plan');
             Route::post('/upgrade', [PlatformController::class, 'upgrade'])->name('upgrade');
+            Route::post('/test', [PlatformController::class, 'test'])->name('test');
+            Route::post('/seed', [PlatformController::class, 'seed'])->name('seed');
         });
 
         Route::resource('/platform/roles', RoleController::class)->except(['show'])->names('platform.roles');
